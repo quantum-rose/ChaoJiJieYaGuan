@@ -278,6 +278,7 @@ export class Cell extends Component {
             this.setState(CellState.NORMAL);
 
             EventManager.emit(EventName.CHECK_DEAL);
+            EventManager.emit(EventName.CHECK_SHUFFLE);
         } else if (this.state === CellState.TEMP_AD) {
             AudioManager.playSound(AudioName.GET_AREA);
 
@@ -291,6 +292,7 @@ export class Cell extends Component {
             this.setState(CellState.TEMP_OPEN);
 
             EventManager.emit(EventName.CHECK_DEAL);
+            EventManager.emit(EventName.CHECK_SHUFFLE);
         }
     }
 

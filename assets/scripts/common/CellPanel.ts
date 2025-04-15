@@ -166,6 +166,7 @@ export class CellPanel extends Component {
 
         EventManager.emit(EventName.CHECK_DEAL);
         EventManager.emit(EventName.CHECK_MERGE);
+        EventManager.emit(EventName.CHECK_SHUFFLE);
     }
 
     /**
@@ -209,6 +210,7 @@ export class CellPanel extends Component {
 
         EventManager.emit(EventName.CHECK_DEAL);
         EventManager.emit(EventName.CHECK_MERGE);
+        EventManager.emit(EventName.CHECK_SHUFFLE);
     }
 
     /**
@@ -313,6 +315,7 @@ export class CellPanel extends Component {
 
         EventManager.emit(EventName.CHECK_DEAL);
         EventManager.emit(EventName.CHECK_MERGE);
+        EventManager.emit(EventName.CHECK_SHUFFLE);
     }
 
     /**
@@ -448,6 +451,7 @@ export class CellPanel extends Component {
         await Promise.all(moveAnis);
 
         EventManager.emit(EventName.CHECK_MERGE);
+        EventManager.emit(EventName.CHECK_SHUFFLE);
     }
 
     /**
@@ -476,7 +480,115 @@ export class CellPanel extends Component {
 
         EventManager.emit(EventName.CHECK_DEAL);
         EventManager.emit(EventName.CHECK_MERGE);
+        EventManager.emit(EventName.CHECK_SHUFFLE);
         EventManager.emit(EventName.CHECK_LEVEL_UP);
+    }
+
+    /**
+     * 洗牌
+     */
+    public async shuffleCoin(): Promise<void> {
+        AudioManager.playSound(AudioName.SHUFFLE);
+
+        const openCells = this.cells.filter(cell => cell.state === CellState.NORMAL || cell.state === CellState.TEMP_OPEN);
+
+        // 收集同类硬币，并将其从槽位中移除
+        const numberToCoins = new Map<number, Coin[]>();
+        for (const cell of openCells) {
+            for (const coin of cell.coins.slice()) {
+                const worldPos = coin.node.getWorldPosition();
+                const localPos = CellPanel.instance.node.getComponent(UITransform).convertToNodeSpaceAR(worldPos);
+
+                cell.removeCoin(coin);
+
+                coin.node.parent = CellPanel.instance.node;
+                coin.node.setPosition(localPos);
+
+                Util.insertToMapArray(numberToCoins, coin.number, coin);
+            }
+        }
+
+        // 获取收集到的硬币种类，并按照数字从小到大排序
+        const numbers = Array.from(numberToCoins.keys());
+        numbers.sort((a, b) => a - b);
+
+        // 同类硬币至多10个为一组进行分组，使用numbers中的顺序进行遍历，实现从小到大的分组
+        const group10Coins: Coin[][] = [];
+        for (const key of numbers) {
+            const coins = numberToCoins.get(key);
+            while (coins.length > 0) {
+                group10Coins.push(coins.splice(0, 10));
+            }
+        }
+
+        // 按分组长度从大到小排序
+        group10Coins.sort((a, b) => b.length - a.length);
+
+        // 记录每个槽位最终分配到的硬币，优先为长度较大的分组分配槽位
+        const cellIndexToCoins = new Map<number, Coin[]>();
+        for (const cell of openCells) {
+            cellIndexToCoins.set(cell.index, group10Coins.shift() ?? []);
+        }
+
+        const restCoins: Coin[] = [];
+        while (group10Coins.length > 0) {
+            const group = group10Coins.shift();
+            for (const coins of cellIndexToCoins.values()) {
+                if (coins.length + group.length <= 10) {
+                    coins.push(...group);
+                    group.length = 0; // 清空分组
+                    break;
+                }
+            }
+            if (group.length > 0) {
+                restCoins.push(...group);
+            }
+        }
+
+        // 如果还有剩余的硬币，见缝插针分配到剩余空位中即可
+        if (restCoins.length > 0) {
+            for (const coins of cellIndexToCoins.values()) {
+                if (coins.length < 10) {
+                    coins.push(...restCoins.splice(0, 10 - coins.length));
+                }
+                if (restCoins.length === 0) {
+                    break;
+                }
+            }
+        }
+
+        const shuffleAnis: Promise<void>[] = []; // 洗牌动画
+        for (const cell of openCells) {
+            const coins = cellIndexToCoins.get(cell.index);
+
+            const cellWorldPos = cell.node.getWorldPosition();
+            const cellLocalPos = CellPanel.instance.node.getComponent(UITransform).convertToNodeSpaceAR(cellWorldPos);
+            const coinStartY = cell.getFirstEmptyYPos();
+
+            for (let i = 0; i < coins.length; i++) {
+                const coin = coins[i];
+                coin.stopChosenAni();
+
+                shuffleAnis.push(
+                    new Promise(resolve => {
+                        tween(coin.node)
+                            .delay(0.035 * i)
+                            .to(0.35, { position: new Vec3(cellLocalPos.x, cellLocalPos.y + coinStartY - i * 18, 0) }, { easing: 'quadOut' })
+                            .call(() => {
+                                cell.addCoin(coin);
+                                resolve();
+                            })
+                            .start();
+                    })
+                );
+            }
+        }
+
+        await Promise.all(shuffleAnis);
+
+        EventManager.emit(EventName.CHECK_DEAL);
+        EventManager.emit(EventName.CHECK_MERGE);
+        EventManager.emit(EventName.CHECK_SHUFFLE);
     }
 
     /**

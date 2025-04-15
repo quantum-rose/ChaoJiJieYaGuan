@@ -12,4 +12,24 @@ export class Util {
         }
         return array;
     }
+
+    public static insertToMapArray<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+        if (!map.has(key)) {
+            map.set(key, []);
+        }
+        map.get(key).push(value);
+    }
+
+    public static removeFromMapArray<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+        if (map.has(key)) {
+            const array = map.get(key);
+            const index = array.indexOf(value);
+            if (index !== -1) {
+                array.splice(index, 1);
+                if (array.length === 0) {
+                    map.delete(key);
+                }
+            }
+        }
+    }
 }

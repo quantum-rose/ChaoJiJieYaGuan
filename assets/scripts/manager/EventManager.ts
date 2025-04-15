@@ -4,6 +4,7 @@ export enum EventName {
     RESTART_GAME = 'restartGame',
     CHECK_DEAL = 'checkDeal',
     CHECK_MERGE = 'checkMerge',
+    CHECK_SHUFFLE = 'checkShuffle',
     CHECK_LEVEL_UP = 'checkLevelUp',
 }
 

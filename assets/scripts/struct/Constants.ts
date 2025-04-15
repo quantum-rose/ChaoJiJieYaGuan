@@ -25,4 +25,5 @@ export enum AudioName {
     UNLOCK_AREA = 'unlockArea',
     CLICK = 'click',
     BUTTON = 'btn',
+    SHUFFLE = 'shuffle',
 }

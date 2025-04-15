@@ -79,13 +79,10 @@ export class MdGame extends BaseView {
             }
         }
 
-        if (cellIndexToEmptyCount.size === 0) {
-            this.buttonDeal.interactable = false;
-            this.buttonDeal.getComponent(Sprite).grayscale = true;
-        } else {
-            this.buttonDeal.interactable = true;
-            this.buttonDeal.getComponent(Sprite).grayscale = false;
-        }
+        const canDeal = cellIndexToEmptyCount.size > 0;
+
+        this.buttonDeal.interactable = canDeal;
+        this.buttonDeal.getComponent(Sprite).grayscale = !canDeal;
     }
 
     /**
@@ -135,13 +132,8 @@ export class MdGame extends BaseView {
             AudioManager.playSound(AudioName.CAN_MERGE);
         }
 
-        if (canMerge) {
-            this.buttonMerge.interactable = true;
-            this.buttonMerge.getComponent(Sprite).grayscale = false;
-        } else {
-            this.buttonMerge.interactable = false;
-            this.buttonMerge.getComponent(Sprite).grayscale = true;
-        }
+        this.buttonMerge.interactable = canMerge;
+        this.buttonMerge.getComponent(Sprite).grayscale = !canMerge;
     }
 
     /**
@@ -156,6 +148,87 @@ export class MdGame extends BaseView {
 
         this._globalLock++;
         await CellPanel.instance.mergeCoin();
+        this._globalLock--;
+    }
+
+    /**
+     * 检查是否可以洗牌
+     */
+    private _checkShuffle() {
+        let canShuffle = true;
+
+        const openCells = CellPanel.instance.cells.filter(cell => cell.state === CellState.NORMAL || cell.state === CellState.TEMP_OPEN);
+
+        for (const from of openCells) {
+            // 如果当前槽位没有硬币，跳过
+            if (from.coins.length === 0) {
+                continue;
+            }
+
+            const fromFirstGroupCoin = from.getFirstGroupCoin();
+
+            // 10个相同的硬币，可以合成，无需洗牌
+            if (fromFirstGroupCoin.length === 10) {
+                canShuffle = false;
+                break;
+            }
+
+            for (const to of openCells) {
+                // 同一个槽位，跳过
+                if (from === to) {
+                    continue;
+                }
+
+                // 槽位是空的，可以移动，无需洗牌
+                if (to.coins.length === 0) {
+                    canShuffle = false;
+                    break;
+                }
+
+                const toFirstGroupCoin = to.getFirstGroupCoin();
+
+                // 10个相同的硬币，可以合成，无需洗牌
+                if (toFirstGroupCoin.length === 10) {
+                    canShuffle = false;
+                    break;
+                }
+
+                // 第一组硬币的种类不一致，跳过
+                if (fromFirstGroupCoin[0].number !== toFirstGroupCoin[0].number) {
+                    continue;
+                }
+
+                // 硬币能够全部移动到目标槽位，无需洗牌
+                if (fromFirstGroupCoin.length + to.coins.length <= 10) {
+                    canShuffle = false;
+                    break;
+                }
+
+                // 移动后能够合成，无需洗牌
+                if (toFirstGroupCoin.length === to.coins.length) {
+                    canShuffle = false;
+                    break;
+                }
+            }
+
+            if (!canShuffle) {
+                break;
+            }
+        }
+
+        this.buttonShuffle.node.active = canShuffle;
+    }
+
+    /**
+     * 点击洗牌按钮
+     */
+    public async handleShuffle() {
+        if (this._globalLock > 0) {
+            return;
+        }
+
+        this._globalLock++;
+        await CellPanel.instance.shuffleCoin();
         this._globalLock--;
     }
 
@@ -185,10 +258,6 @@ export class MdGame extends BaseView {
 
             CellPanel.instance.updateCellState();
         }
-    }
-
-    public handleShuffle() {
-        // TODO
     }
 
     public openSettingPanel() {
@@ -274,6 +343,7 @@ export class MdGame extends BaseView {
         EventManager.on(EventName.RESTART_GAME, this._restartGame, this);
         EventManager.on(EventName.CHECK_DEAL, this._checkDeal, this);
         EventManager.on(EventName.CHECK_MERGE, this._checkMerge, this);
+        EventManager.on(EventName.CHECK_SHUFFLE, this._checkShuffle, this);
         EventManager.on(EventName.CHECK_LEVEL_UP, this._checkLevelUp, this);
     }
 
