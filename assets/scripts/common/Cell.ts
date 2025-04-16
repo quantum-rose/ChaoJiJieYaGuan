@@ -210,8 +210,8 @@ export class Cell extends Component {
             disappearAnis.push(
                 new Promise(resolve => {
                     const embedTween = tween(coin.node)
-                        .to(0.032, { scale: new Vec3(1.2, 1, 1) }, { easing: 'quadIn' })
-                        .to(0.032, { scale: new Vec3(1, 1, 1) }, { easing: 'quadOut' });
+                        .to(0.02, { scale: new Vec3(1.2, 1, 1) }, { easing: 'quadIn' })
+                        .to(0.02, { scale: new Vec3(1, 1, 1) }, { easing: 'quadOut' });
 
                     tween(coin.node)
                         .repeat(i + 1, embedTween)

@@ -135,7 +135,7 @@ export class CellPanel extends Component {
      */
     public async dealCoin(): Promise<void> {
         AudioManager.playSound(AudioName.DEAL_COIN);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
 
         const dealAnis: Promise<void>[] = []; // 发牌动画
         const cellIndexToAddCoins = this._generateDealCoins();
@@ -225,7 +225,7 @@ export class CellPanel extends Component {
             }
         } else if (step === 4) {
             AudioManager.playSound(AudioName.DEAL_COIN);
-            VibrateManager.vibrate(30);
+            VibrateManager.vibrateShort();
 
             const dealAnis: Promise<void>[] = []; // 发牌动画
             const cellIndexToAddCoins = new Map<number, number[]>(); // 记录每个槽位要添加的硬币
@@ -266,7 +266,7 @@ export class CellPanel extends Component {
      */
     public async dealTestCoin(): Promise<void> {
         AudioManager.playSound(AudioName.DEAL_COIN);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
 
         const cellIndexToAddCoins = new Map<number, number[]>(); // 记录每个槽位要添加的硬币
         const maxCoin = ProgressView.instance.getCurrentStepNum() - 1; // 当前步骤中的硬币面值 - 1
@@ -358,7 +358,7 @@ export class CellPanel extends Component {
      */
     public chooseCoin(cell: Cell) {
         AudioManager.playSound(AudioName.CHOOSE_COIN);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
         cell.chooseCoin();
     }
 
@@ -366,7 +366,7 @@ export class CellPanel extends Component {
      * 放下硬币
      */
     public dropCoin(cell: Cell) {
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
         cell.dropCoin();
     }
 
@@ -382,7 +382,7 @@ export class CellPanel extends Component {
      */
     public async warnCoin(coins: Coin[]): Promise<void> {
         AudioManager.playSound(AudioName.WARN);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
 
         await Promise.all(coins.map(coin => coin.playWarnAni()));
 
@@ -398,7 +398,7 @@ export class CellPanel extends Component {
      * 移动硬币
      */
     public async moveCoin(coins: Coin[], fromCell: Cell, toCell: Cell): Promise<void> {
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
 
         let coinOrder = 0;
         const toCellWorldPos = toCell.node.getWorldPosition();
@@ -459,7 +459,7 @@ export class CellPanel extends Component {
      */
     public async mergeCoin(newCoinCount?: number): Promise<void> {
         AudioManager.playSound(AudioName.MERGE_COIN);
-        VibrateManager.vibrate(700);
+        VibrateManager.vibrateLong();
 
         const mergeAnis: Promise<void>[] = []; // 合并硬币的动画
 
@@ -489,6 +489,7 @@ export class CellPanel extends Component {
      */
     public async shuffleCoin(): Promise<void> {
         AudioManager.playSound(AudioName.SHUFFLE);
+        VibrateManager.vibrateShort();
 
         const openCells = this.cells.filter(cell => cell.state === CellState.NORMAL || cell.state === CellState.TEMP_OPEN);
 

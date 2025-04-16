@@ -31,7 +31,7 @@ export class MdSetting extends BaseView {
 
     public open(): Promise<void> {
         AudioManager.playSound(AudioName.BUTTON);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
 
         this.show();
         this.panel.setScale(0, 0, 0);
@@ -48,7 +48,7 @@ export class MdSetting extends BaseView {
 
     public close(): Promise<void> {
         AudioManager.playSound(AudioName.BUTTON);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
 
         this.panel.setScale(1, 1, 1);
 
@@ -77,7 +77,7 @@ export class MdSetting extends BaseView {
         AudioManager.setSoundEnabled(isOn);
 
         AudioManager.playSound(AudioName.CLICK);
-        VibrateManager.vibrate(30);
+        VibrateManager.vibrateShort();
     }
 
     /**
@@ -94,7 +94,7 @@ export class MdSetting extends BaseView {
         VibrateManager.setVibrateEnabled(isOn);
 
         AudioManager.playSound(AudioName.CLICK);
-        VibrateManager.vibrate(300);
+        VibrateManager.vibrateLong();
     }
 
     /**

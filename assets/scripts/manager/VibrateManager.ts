@@ -5,7 +5,8 @@ export class VibrateManager {
     private static _disable: boolean = !DataManager.getVibrate();
 
     private static _vibrate = (() => {
-        if (sys.isNative) {
+        // 安卓原生
+        if (sys.platform === sys.Platform.ANDROID) {
             return (time: number) => {
                 native.reflection.callStaticMethod(
                     'com/cocos/game/AppActivity', // Java 类路径
@@ -16,6 +17,20 @@ export class VibrateManager {
             };
         }
 
+        // 微信小游戏
+        if (sys.platform === sys.Platform.WECHAT_GAME) {
+            return (time: number) => {
+                if (time <= 15) {
+                    wx.vibrateShort({
+                        type: 'heavy',
+                    });
+                } else {
+                    wx.vibrateLong();
+                }
+            };
+        }
+
+        // 浏览器
         if (sys.isBrowser && navigator.vibrate) {
             return (time: number) => {
                 navigator.vibrate(time);
@@ -28,10 +43,16 @@ export class VibrateManager {
         };
     })();
 
-    public static vibrate(time: number) {
+    public static vibrateShort() {
         if (VibrateManager._disable) return;
 
-        VibrateManager._vibrate(time);
+        VibrateManager._vibrate(15);
+    }
+
+    public static vibrateLong() {
+        if (VibrateManager._disable) return;
+
+        VibrateManager._vibrate(400);
     }
 
     public static setVibrateEnabled(enabled: boolean) {

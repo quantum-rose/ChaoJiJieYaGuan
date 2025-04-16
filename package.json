@@ -3,5 +3,9 @@
   "uuid": "95b34e04-e1d1-42e9-ad44-8c360b5ffd8d",
   "creator": {
     "version": "3.8.5"
+  },
+  "packageManager": "pnpm@10.4.1",
+  "devDependencies": {
+    "minigame-api-typings": "^3.8.11"
   }
 }

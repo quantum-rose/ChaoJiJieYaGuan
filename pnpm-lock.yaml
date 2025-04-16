@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      minigame-api-typings:
+        specifier: ^3.8.11
+        version: 3.8.11
+
+packages:
+
+  minigame-api-typings@3.8.11:
+    resolution: {integrity: sha512-e3BnW0dCyOoVwABCmKJjjfCofLyaYq8u0CSDOcAct1YsVoBf03ZOAIHT240HGJKrUETKObCPcJFYd2+J4OgTEA==}
+
+snapshots:
+
+  minigame-api-typings@3.8.11: {}
