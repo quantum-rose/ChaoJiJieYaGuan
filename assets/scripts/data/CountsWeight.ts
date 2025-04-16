@@ -61,4 +61,8 @@ export class CountsWeight {
         }
         throw new Error('No item found for the given weight.');
     }
+
+    public static getMaxCount(stepIndex: number): number {
+        return this.arr[stepIndex][0].value;
+    }
 }

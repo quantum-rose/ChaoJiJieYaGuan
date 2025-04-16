@@ -161,13 +161,28 @@ export class MdGame extends BaseView {
     }
 
     /**
-     * 检查是否可以洗牌
+     * 检查是否可以洗牌，即是否陷入死局，如果还有能进行的操作，则不需要洗牌
      */
     private _checkShuffle() {
-        let canShuffle = true;
-
         const openCells = CellPanel.instance.cells.filter(cell => cell.state === CellState.NORMAL || cell.state === CellState.TEMP_OPEN);
 
+        // 是否还有足够的空位能够发牌，且发牌后一定不会满
+        const maxDealCount = CountsWeight.getMaxCount(ProgressView.instance.currentIndex);
+        if (openCells.some(cell => cell.coins.length + maxDealCount <= 9)) {
+            this.buttonShuffle.node.active = false;
+            return;
+        }
+
+        // 是否有槽位可以合成硬币
+        for (const cell of openCells) {
+            const firstGroupCoin = cell.getFirstGroupCoin();
+            if (firstGroupCoin.length === 10) {
+                this.buttonShuffle.node.active = false;
+                return;
+            }
+        }
+
+        // 是否有硬币可以移动，且移动后局面有所不同
         for (const from of openCells) {
             // 如果当前槽位没有硬币，跳过
             if (from.coins.length === 0) {
@@ -176,56 +191,34 @@ export class MdGame extends BaseView {
 
             const fromFirstGroupCoin = from.getFirstGroupCoin();
 
-            // 10个相同的硬币，可以合成，无需洗牌
-            if (fromFirstGroupCoin.length === 10) {
-                canShuffle = false;
-                break;
-            }
-
             for (const to of openCells) {
-                // 同一个槽位，跳过
-                if (from === to) {
+                // 同一个槽位，或者槽位已满，跳过
+                if (from === to || to.coins.length === 10) {
                     continue;
-                }
-
-                // 槽位是空的，可以移动，无需洗牌
-                if (to.coins.length === 0) {
-                    canShuffle = false;
-                    break;
                 }
 
                 const toFirstGroupCoin = to.getFirstGroupCoin();
 
-                // 10个相同的硬币，可以合成，无需洗牌
-                if (toFirstGroupCoin.length === 10) {
-                    canShuffle = false;
-                    break;
+                /**
+                 * 满足移动硬币的基本条件之一：
+                 * 1.目标槽位为空
+                 * 2.两个槽位的第一组硬币种类相同
+                 *
+                 * 且同时满足以下条件之一的：
+                 * 1.硬币能够全部移动到新槽位
+                 * 2.硬币能够部分移动到新槽位，但移动后能达成满10个的合成条件
+                 */
+                if (
+                    (to.coins.length === 0 || fromFirstGroupCoin[0].number === toFirstGroupCoin[0].number) &&
+                    (fromFirstGroupCoin.length + to.coins.length <= 10 || toFirstGroupCoin.length === to.coins.length)
+                ) {
+                    this.buttonShuffle.node.active = false;
+                    return;
                 }
-
-                // 第一组硬币的种类不一致，跳过
-                if (fromFirstGroupCoin[0].number !== toFirstGroupCoin[0].number) {
-                    continue;
-                }
-
-                // 硬币能够全部移动到目标槽位，无需洗牌
-                if (fromFirstGroupCoin.length + to.coins.length <= 10) {
-                    canShuffle = false;
-                    break;
-                }
-
-                // 移动后能够合成，无需洗牌
-                if (toFirstGroupCoin.length === to.coins.length) {
-                    canShuffle = false;
-                    break;
-                }
-            }
-
-            if (!canShuffle) {
-                break;
             }
         }
 
-        this.buttonShuffle.node.active = canShuffle;
+        this.buttonShuffle.node.active = true;
     }
 
     /**
