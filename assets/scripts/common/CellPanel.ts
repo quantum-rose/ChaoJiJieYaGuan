@@ -153,7 +153,7 @@ export class CellPanel extends Component {
                 coin.node.position = dealBtnLocalPos;
 
                 dealAnis.push(
-                    this._playDealAni(coin.node, 0.04 * coinOrder, coinStartY - i * 18).then(() => {
+                    this._playDealAni(coin.node, 0.03 * coinOrder, coinStartY - i * 18).then(() => {
                         cell.addCoin(coin);
                     })
                 );
@@ -193,7 +193,7 @@ export class CellPanel extends Component {
                     new Promise(resolve => {
                         tween(coin.node)
                             .delay(0.1 * coinOrder)
-                            .to(0.4, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
+                            .to(0.3, { scale: new Vec3(1, 1, 1) }, { easing: 'backOut' })
                             .call(() => {
                                 cell.addCoin(coin);
                                 resolve();
@@ -248,7 +248,7 @@ export class CellPanel extends Component {
                     coin.node.position = dealBtnLocalPos;
 
                     dealAnis.push(
-                        this._playDealAni(coin.node, 0.04 * coinOrder, coinStartY - i * 18).then(() => {
+                        this._playDealAni(coin.node, 0.03 * coinOrder, coinStartY - i * 18).then(() => {
                             cell.addCoin(coin);
                         })
                     );
@@ -302,7 +302,7 @@ export class CellPanel extends Component {
                 coin.node.position = dealBtnLocalPos;
 
                 dealAnis.push(
-                    this._playDealAni(coin.node, 0.04 * coinOrder, coinStartY - i * 18).then(() => {
+                    this._playDealAni(coin.node, 0.03 * coinOrder, coinStartY - i * 18).then(() => {
                         cell.addCoin(coin);
                     })
                 );
@@ -325,7 +325,7 @@ export class CellPanel extends Component {
         return new Promise(resolve => {
             tween(coinNode)
                 .delay(delay)
-                .to(0.4, { position: new Vec3(0, yPos, 0) }, { easing: 'quadOut' })
+                .to(0.3, { position: new Vec3(0, yPos, 0) }, { easing: 'quadOut' })
                 .call(resolve)
                 .start();
         });
@@ -573,8 +573,8 @@ export class CellPanel extends Component {
                 shuffleAnis.push(
                     new Promise(resolve => {
                         tween(coin.node)
-                            .delay(0.035 * i)
-                            .to(0.35, { position: new Vec3(cellLocalPos.x, cellLocalPos.y + coinStartY - i * 18, 0) }, { easing: 'quadOut' })
+                            .delay(0.03 * i)
+                            .to(0.3, { position: new Vec3(cellLocalPos.x, cellLocalPos.y + coinStartY - i * 18, 0) }, { easing: 'quadOut' })
                             .call(() => {
                                 cell.addCoin(coin);
                                 resolve();
