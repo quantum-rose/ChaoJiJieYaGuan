@@ -341,8 +341,6 @@ export class MdGame extends BaseView {
 
         if (e.target.name === 'Cell') {
             this._handleClickCell(e);
-        } else {
-            CellPanel.instance.dropAllCoin();
         }
     }
 
