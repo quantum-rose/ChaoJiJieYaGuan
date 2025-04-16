@@ -259,6 +259,26 @@ export class Cell extends Component {
     }
 
     /**
+     * 已锁定警告
+     */
+    public async warnLock(): Promise<void> {
+        if (this._isAnimating) {
+            return;
+        }
+
+        if (this.state === CellState.LOCK || this.state === CellState.LOCK_NEXT) {
+            AudioManager.playSound(AudioName.WARN);
+
+            const lockAnimation = this.lock.getComponent(Animation);
+            lockAnimation.play('LockWarn');
+
+            this._isAnimating = true;
+            await new Promise<void>(resolve => lockAnimation.once(Animation.EventType.FINISHED, resolve));
+            this._isAnimating = false;
+        }
+    }
+
+    /**
      * 解锁槽位
      */
     public async unlock(): Promise<void> {

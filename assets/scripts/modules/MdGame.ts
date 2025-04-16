@@ -283,6 +283,12 @@ export class MdGame extends BaseView {
     private async _handleClickCell(e: EventTouch) {
         const currentChosenCell = e.target.getComponent(Cell) as Cell;
 
+        // 如果当前槽位处于锁定状态，进行警告提示
+        if (currentChosenCell.state === CellState.LOCK || currentChosenCell.state === CellState.LOCK_NEXT) {
+            currentChosenCell.warnLock();
+            return;
+        }
+
         // 如果当前槽位处于可解锁状态，解锁当前槽位
         if (currentChosenCell.state === CellState.UNLOCKABLE || currentChosenCell.state === CellState.TEMP_AD) {
             currentChosenCell.unlock();
