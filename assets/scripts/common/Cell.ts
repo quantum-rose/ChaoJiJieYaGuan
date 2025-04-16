@@ -60,6 +60,7 @@ export class Cell extends Component {
             coin.node.destroy();
         });
         this.coins = [];
+        this.canMerge = false;
     }
 
     /**

@@ -47,7 +47,16 @@ export class MdGame extends BaseView {
      * 开始游戏
      */
     private _startGame() {
+        this.buttonDeal.interactable = true;
+        this.buttonDeal.getComponent(Sprite).grayscale = false;
+
+        this.buttonMerge.interactable = false;
+        this.buttonMerge.getComponent(Sprite).grayscale = true;
+
+        this.buttonShuffle.node.active = false;
+
         this.levelText.string = `第 ${DataManager.getLevel()} 关`;
+
         CellPanel.instance.reset();
         ProgressView.instance.reset();
     }
