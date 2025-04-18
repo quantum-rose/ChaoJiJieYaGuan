@@ -17,6 +17,9 @@ export class Cell extends Component {
     merge: Node = null;
 
     @property(Node)
+    unlockLight: Node = null;
+
+    @property(Node)
     coinParent: Node = null;
 
     @property(Node)
@@ -286,35 +289,41 @@ export class Cell extends Component {
             return;
         }
 
+        let animationNode: Node = null;
+        let animationName: string = null;
+        let animationCallback: () => void = null;
+
         if (this.state === CellState.UNLOCKABLE) {
-            AudioManager.playSound(AudioName.GET_AREA);
-
-            const unlockAnimation = this.unlockable.getComponent(Animation);
-            unlockAnimation.play('UnlockMove');
-
-            this._isAnimating = true;
-            await new Promise<void>(resolve => unlockAnimation.once(Animation.EventType.FINISHED, resolve));
-            this._isAnimating = false;
-
-            this.setState(CellState.NORMAL);
-
-            EventManager.emit(EventName.CHECK_DEAL);
-            EventManager.emit(EventName.CHECK_SHUFFLE);
+            animationNode = this.unlockable;
+            animationName = 'UnlockMove';
+            animationCallback = () => {
+                this.setState(CellState.NORMAL);
+                EventManager.emit(EventName.CHECK_DEAL);
+                EventManager.emit(EventName.CHECK_SHUFFLE);
+            };
         } else if (this.state === CellState.TEMP_AD) {
-            AudioManager.playSound(AudioName.GET_AREA);
-
-            const unlockAnimation = this.adLock.getComponent(Animation);
-            unlockAnimation.play('AdUnlock');
-
-            this._isAnimating = true;
-            await new Promise<void>(resolve => unlockAnimation.once(Animation.EventType.FINISHED, resolve));
-            this._isAnimating = false;
-
-            this.setState(CellState.TEMP_OPEN);
-
-            EventManager.emit(EventName.CHECK_DEAL);
-            EventManager.emit(EventName.CHECK_SHUFFLE);
+            animationNode = this.adLock;
+            animationName = 'AdUnlock';
+            animationCallback = () => {
+                this.setState(CellState.TEMP_OPEN);
+                EventManager.emit(EventName.CHECK_DEAL);
+                EventManager.emit(EventName.CHECK_SHUFFLE);
+            };
         }
+
+        AudioManager.playSound(AudioName.GET_AREA);
+
+        const unlockLightAnimation = this.unlockLight.getComponent(Animation);
+        unlockLightAnimation.play('UnlockLight');
+
+        const unlockAnimation = animationNode.getComponent(Animation);
+        unlockAnimation.play(animationName);
+
+        this._isAnimating = true;
+        await new Promise<void>(resolve => unlockAnimation.once(Animation.EventType.FINISHED, resolve));
+        this._isAnimating = false;
+
+        animationCallback();
     }
 
     protected onLoad(): void {
