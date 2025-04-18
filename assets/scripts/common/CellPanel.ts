@@ -450,6 +450,10 @@ export class CellPanel extends Component {
 
         await Promise.all(moveAnis);
 
+        if (fromCell.coins.length === 0 && fromCell.state === CellState.TEMP_OPEN) {
+            fromCell.setState(CellState.TEMP_AD);
+        }
+
         EventManager.emit(EventName.CHECK_MERGE);
         EventManager.emit(EventName.CHECK_SHUFFLE);
     }

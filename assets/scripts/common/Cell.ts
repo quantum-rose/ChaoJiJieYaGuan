@@ -109,10 +109,8 @@ export class Cell extends Component {
             this.unlockable.active = false;
             this.adLock.active = true;
 
-            this.adLock.getChildByName('ADLockBg').position = new Vec3(0, 0, 0);
-        }
-
-        if (state === CellState.TEMP_OPEN) {
+            this.adLock.getComponent(Animation).play('AdLock');
+        } else if (state === CellState.TEMP_OPEN) {
             this.merge.active = false;
             this.lock.active = false;
             this.unlockable.active = false;
