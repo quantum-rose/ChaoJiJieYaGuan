@@ -141,7 +141,6 @@ export class CellPanel extends Component {
         const cellIndexToAddCoins = this._generateDealCoins();
 
         cellIndexToAddCoins.forEach((coins, cellIndex) => {
-            let coinOrder = 0;
             const cell = this.cells[cellIndex];
             const coinStartY = cell.getFirstEmptyYPos();
             // 计算发牌按钮在当前槽位的本地坐标
@@ -153,12 +152,10 @@ export class CellPanel extends Component {
                 coin.node.position = dealBtnLocalPos;
 
                 dealAnis.push(
-                    this._playDealAni(coin.node, 0.03 * coinOrder, coinStartY - i * 18).then(() => {
+                    this._playDealAni(coin.node, i, coinStartY - i * 18).then(() => {
                         cell.addCoin(coin);
                     })
                 );
-
-                coinOrder++;
             }
         });
 
@@ -236,7 +233,6 @@ export class CellPanel extends Component {
             cellIndexToAddCoins.set(2, [coinNumber]);
 
             cellIndexToAddCoins.forEach((coins, cellIndex) => {
-                let coinOrder = 0;
                 const cell = this.cells[cellIndex];
                 const coinStartY = cell.getFirstEmptyYPos();
                 // 计算发牌按钮在当前槽位的本地坐标
@@ -248,12 +244,10 @@ export class CellPanel extends Component {
                     coin.node.position = dealBtnLocalPos;
 
                     dealAnis.push(
-                        this._playDealAni(coin.node, 0.03 * coinOrder, coinStartY - i * 18).then(() => {
+                        this._playDealAni(coin.node, i, coinStartY - i * 18).then(() => {
                             cell.addCoin(coin);
                         })
                     );
-
-                    coinOrder++;
                 }
             });
 
@@ -290,7 +284,6 @@ export class CellPanel extends Component {
         const dealAnis: Promise<void>[] = []; // 发牌动画
 
         cellIndexToAddCoins.forEach((coins, cellIndex) => {
-            let coinOrder = 0;
             const cell = this.cells[cellIndex];
             const coinStartY = cell.getFirstEmptyYPos();
             // 计算发牌按钮在当前槽位的本地坐标
@@ -302,12 +295,10 @@ export class CellPanel extends Component {
                 coin.node.position = dealBtnLocalPos;
 
                 dealAnis.push(
-                    this._playDealAni(coin.node, 0.03 * coinOrder, coinStartY - i * 18).then(() => {
+                    this._playDealAni(coin.node, i, coinStartY - i * 18).then(() => {
                         cell.addCoin(coin);
                     })
                 );
-
-                coinOrder++;
             }
         });
 
@@ -321,10 +312,10 @@ export class CellPanel extends Component {
     /**
      * 播放发牌动画
      */
-    private _playDealAni(coinNode: Node, delay: number, yPos: number) {
+    private _playDealAni(coinNode: Node, order: number, yPos: number) {
         return new Promise(resolve => {
             tween(coinNode)
-                .delay(delay)
+                .delay(0.03 * order)
                 .to(0.3, { position: new Vec3(0, yPos, 0) }, { easing: 'quadOut' })
                 .call(resolve)
                 .start();
@@ -425,19 +416,9 @@ export class CellPanel extends Component {
                 coin.node.setPosition(startPos);
 
                 moveAnis.push(
-                    new Promise(resolve => {
-                        tween(coin.node)
-                            .delay(0.015 * coinOrder)
-                            .call(() => {
-                                AudioManager.playSound(AudioName.PLACE_COIN);
-                            })
-                            .to(0.15, { position: new Vec3(toCellLocalPos.x, toCellLocalPos.y + coinStartY - coinOrder * 18, 0) }, { easing: 'quadOut' })
-                            .call(() => {
-                                fromCell.removeCoin(coin);
-                                toCell.addCoin(coin);
-                                resolve();
-                            })
-                            .start();
+                    this._playMoveAni(coin.node, coinOrder, new Vec3(toCellLocalPos.x, toCellLocalPos.y + coinStartY - coinOrder * 18, 0)).then(() => {
+                        fromCell.removeCoin(coin);
+                        toCell.addCoin(coin);
                     })
                 );
 
@@ -459,12 +440,29 @@ export class CellPanel extends Component {
     }
 
     /**
+     * 播放移动硬币动画
+     */
+    private _playMoveAni(coinNode: Node, order: number, position: Vec3) {
+        return new Promise(resolve => {
+            tween(coinNode)
+                .delay(0.015 * order)
+                .call(() => {
+                    AudioManager.playSound(AudioName.PLACE_COIN);
+                })
+                .to(0.15, { position }, { easing: 'quadOut' })
+                .call(resolve)
+                .start();
+        });
+    }
+
+    /**
      * 合成硬币
      */
     public async mergeCoin(newCoinCount?: number): Promise<void> {
         AudioManager.playSound(AudioName.MERGE_COIN);
         VibrateManager.vibrateLong();
 
+        const tempCells: Cell[] = [];
         const mergeAnis: Promise<void>[] = []; // 合并硬币的动画
 
         for (const cell of this.cells) {
@@ -477,15 +475,92 @@ export class CellPanel extends Component {
                 continue;
             }
 
+            if (cell.state === CellState.TEMP_OPEN) {
+                tempCells.push(cell);
+            }
+
             mergeAnis.push(cell.mergeCoin(newCoinCount));
         }
 
         await Promise.all(mergeAnis);
 
+        if (tempCells.length > 0) {
+            await this._cleanTempCell(tempCells); // 清理临时槽位中的硬币
+        }
+
         EventManager.emit(EventName.CHECK_DEAL);
         EventManager.emit(EventName.CHECK_MERGE);
         EventManager.emit(EventName.CHECK_SHUFFLE);
         EventManager.emit(EventName.CHECK_LEVEL_UP);
+    }
+
+    /**
+     * 临时槽位中的硬币合并后随机移动到其它槽位
+     */
+    private async _cleanTempCell(tempCells: Cell[]): Promise<void> {
+        // 记录未满的槽位
+        const notFullCells: [number, number][] = [];
+        for (const cell of this.cells) {
+            if (tempCells.indexOf(cell) !== -1) {
+                continue;
+            }
+            const emptyCount = cell.getEmptyCount();
+            if (emptyCount > 0) {
+                notFullCells.push([cell.index, emptyCount]);
+            }
+        }
+
+        // 记录每个槽位最终分配到的硬币
+        const cellIndexToCoins = new Map<number, Coin[]>();
+        for (const cell of tempCells) {
+            const count = cell.coins.length;
+            const candidateCells = notFullCells.filter(([, emptyCount]) => emptyCount >= count);
+            if (candidateCells.length === 0) {
+                continue;
+            }
+
+            // 随机选择一个槽位进行分配
+            const random = candidateCells[Util.getRandomInt(0, candidateCells.length - 1)];
+            const cellIndex = random[0];
+
+            for (const coin of cell.coins.slice()) {
+                const worldPos = coin.node.getWorldPosition();
+                const localPos = CellPanel.instance.node.getComponent(UITransform).convertToNodeSpaceAR(worldPos);
+
+                cell.removeCoin(coin);
+
+                coin.node.parent = CellPanel.instance.node;
+                coin.node.setPosition(localPos);
+
+                Util.insertToMapArray(cellIndexToCoins, cellIndex, coin);
+            }
+
+            cell.setState(CellState.TEMP_AD); // 再次设置为临时广告槽位
+
+            random[1] -= count; // 更新槽位的空格数量
+        }
+
+        const moveAnis: Promise<void>[] = []; // 移动硬币的动画
+        cellIndexToCoins.forEach((coins, cellIndex) => {
+            const cell = this.cells[cellIndex];
+
+            const cellWorldPos = cell.node.getWorldPosition();
+            const cellLocalPos = CellPanel.instance.node.getComponent(UITransform).convertToNodeSpaceAR(cellWorldPos);
+            const coinStartY = cell.getFirstEmptyYPos();
+
+            for (let i = 0; i < coins.length; i++) {
+                const coin = coins[i];
+                coin.stopChosenAni();
+
+                moveAnis.push(
+                    this._playMoveAni(coin.node, i, new Vec3(cellLocalPos.x, cellLocalPos.y + coinStartY - i * 18, 0)).then(() => {
+                        cell.addCoin(coin);
+                    })
+                );
+            }
+        });
+
+        await Promise.all(moveAnis);
     }
 
     /**
@@ -538,33 +613,29 @@ export class CellPanel extends Component {
         const restCoins: Coin[] = [];
         while (group10Coins.length > 0) {
             const group = group10Coins.shift();
-            for (const coins of cellIndexToCoins.values()) {
-                if (coins.length + group.length <= 10) {
+
+            cellIndexToCoins.forEach(coins => {
+                if (group.length !== 0 && coins.length + group.length <= 10) {
                     coins.push(...group);
                     group.length = 0; // 清空分组
-                    break;
                 }
-            }
+            });
+
             if (group.length > 0) {
                 restCoins.push(...group);
             }
         }
 
         // 如果还有剩余的硬币，见缝插针分配到剩余空位中即可
-        if (restCoins.length > 0) {
-            for (const coins of cellIndexToCoins.values()) {
-                if (coins.length < 10) {
-                    coins.push(...restCoins.splice(0, 10 - coins.length));
-                }
-                if (restCoins.length === 0) {
-                    break;
-                }
+        cellIndexToCoins.forEach(coins => {
+            if (restCoins.length !== 0 && coins.length < 10) {
+                coins.push(...restCoins.splice(0, 10 - coins.length));
             }
-        }
+        });
 
         const shuffleAnis: Promise<void>[] = []; // 洗牌动画
-        for (const cell of openCells) {
-            const coins = cellIndexToCoins.get(cell.index);
+        cellIndexToCoins.forEach((coins, cellIndex) => {
+            const cell = this.cells[cellIndex];
 
             const cellWorldPos = cell.node.getWorldPosition();
             const cellLocalPos = CellPanel.instance.node.getComponent(UITransform).convertToNodeSpaceAR(cellWorldPos);
@@ -587,7 +658,7 @@ export class CellPanel extends Component {
                     })
                 );
             }
-        }
+        });
 
         await Promise.all(shuffleAnis);
 
