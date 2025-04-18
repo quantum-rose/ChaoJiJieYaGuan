@@ -30,6 +30,17 @@ export class VibrateManager {
             };
         }
 
+        // 抖音小游戏
+        if (sys.platform === sys.Platform.BYTEDANCE_MINI_GAME) {
+            return (time: number) => {
+                if (time <= 15) {
+                    tt.vibrateShort();
+                } else {
+                    tt.vibrateLong();
+                }
+            };
+        }
+
         // 浏览器
         if (sys.isBrowser && navigator.vibrate) {
             return (time: number) => {
